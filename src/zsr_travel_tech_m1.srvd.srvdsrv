@@ -1,0 +1,6 @@
+@EndUserText.label: 'Service definition for managed view'
+define service ZSR_TRAVEL_TECH_M1 {
+  expose ZC_TRAVEL_TECH_M1;
+  expose ZC_BOOKING_TECH_M1;
+  expose ZC_BOOKSUP_TECH_M1;
+}
