@@ -64,7 +64,7 @@ annotate view ZC_BOOKING_TECH_M1 with
   @Consumption.valueHelpDefinition: [{
      entity: {
            name: '/DMO/I_Carrier',
-           element: 'ConnectionId'
+           element: 'AirlineID'
      },
      additionalBinding: [
      {
@@ -90,7 +90,7 @@ annotate view ZC_BOOKING_TECH_M1 with
   @Consumption.valueHelpDefinition: [{
    entity: {
          name: '/DMO/I_Flight',
-         element: 'FlightDate'
+         element: 'ConnectionID'
    },
    additionalBinding: [
    {

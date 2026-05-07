@@ -1,0 +1,5 @@
+@EndUserText.label: 'Service for connection'
+define service ZSRV_CONNECTION_NIT {
+  expose ZI_Connection_Nit;
+  expose ZI_Flight_NIT_R;
+}

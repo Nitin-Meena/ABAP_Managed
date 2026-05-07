@@ -30,9 +30,9 @@ define root view entity ZC_TRAVEL_TECH_M1
       }
       OverallStatus,
       _Status._Text.Text as OverallStatusText : localized,
-      //      CreatedBy,
-      //      CreatedAt,
-      //      LastChangedBy,
+      CreatedBy,
+      CreatedAt,
+      LastChangedBy,
       LastChangedAt,
       /* Associations */
       _Agency,

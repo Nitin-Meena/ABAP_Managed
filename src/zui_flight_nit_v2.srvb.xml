@@ -4,30 +4,30 @@
   <asx:values>
    <SRVB>
     <METADATA>
-     <NAME>ZUI_TRAVEL_TECH_M1_V2</NAME>
+     <NAME>ZUI_FLIGHT_NIT_V2</NAME>
      <TYPE>SRVB/SVB</TYPE>
-     <DESCRIPTION>V2 travel managed app</DESCRIPTION>
+     <DESCRIPTION>service binding for flight</DESCRIPTION>
      <LANGUAGE>EN</LANGUAGE>
      <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
      <ABAP_LANGU_VERSION>5</ABAP_LANGU_VERSION>
     </METADATA>
     <CONTENT>
      <BIND_TYPE_IMPL>
-      <NAME>ZUI_TRAVEL_TECH_M1_V2</NAME>
+      <NAME>ZUI_FLIGHT_NIT_V2</NAME>
      </BIND_TYPE_IMPL>
      <BIND_TYPE>ODATA</BIND_TYPE>
      <BIND_TYPE_VERSION>V2</BIND_TYPE_VERSION>
      <SERVICES>
       <item>
-       <SERVICE_NAME>ZUI_TRAVEL_TECH_M1_V2</SERVICE_NAME>
+       <SERVICE_NAME>ZUI_FLIGHT_NIT_V2</SERVICE_NAME>
        <SERVICE_CONTENT>
         <item>
          <SERVICE_VERSION>0001</SERVICE_VERSION>
          <RELEASE_STATE>NOT_RELEASED</RELEASE_STATE>
          <SRVD_REF>
-          <URI>/sap/bc/adt/ddic/srvd/sources/zsr_travel_tech_m1</URI>
+          <URI>/sap/bc/adt/ddic/srvd/sources/zsrv_connection_nit</URI>
           <TYPE>SRVD/SRV</TYPE>
-          <NAME>ZSR_TRAVEL_TECH_M1</NAME>
+          <NAME>ZSRV_CONNECTION_NIT</NAME>
          </SRVD_REF>
          <BIND_TYPE_DATA>
           <CONTENT>
