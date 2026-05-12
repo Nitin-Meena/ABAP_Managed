@@ -1,3 +1,170 @@
+CLASS lsc_zi_travel_tech_m1 DEFINITION INHERITING FROM cl_abap_behavior_saver.
+
+  PROTECTED SECTION.
+
+    METHODS save_modified REDEFINITION.
+
+ENDCLASS.
+
+CLASS lsc_zi_travel_tech_m1 IMPLEMENTATION.
+
+  METHOD save_modified.
+
+    DATA : lt_travel_log TYPE STANDARD TABLE OF zlog_travel_nm1.
+    DATA : lt_travel_log_c TYPE STANDARD TABLE OF zlog_travel_nm1.
+    DATA : lt_travel_log_u TYPE STANDARD TABLE OF zlog_travel_nm1.
+
+    IF create-travel IS NOT INITIAL.
+
+      lt_travel_log = CORRESPONDING #( create-travel ).
+
+      LOOP AT lt_travel_log ASSIGNING FIELD-SYMBOL(<ls_travel_log>).
+
+        <ls_travel_log>-changing_operation = 'CREATE'.
+
+        GET TIME STAMP FIELD <ls_travel_log>-created_at.
+
+        READ TABLE create-travel ASSIGNING FIELD-SYMBOL(<ls_travel>)
+
+                                 WITH TABLE KEY entity
+                                 COMPONENTS TravelId = <ls_travel_log>-TravelId.
+
+        IF sy-subrc IS INITIAL.
+
+          IF <ls_travel>-%control-BookingFee = cl_abap_behv=>flag_changed.
+
+            <ls_travel_log>-changed_field_name = 'Booking Fee'.
+            <ls_travel_log>-changed_value = <ls_travel>-BookingFee.
+
+            TRY.
+                <ls_travel_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+              CATCH cx_uuid_error.
+                "handle exception
+            ENDTRY.
+            APPEND <ls_travel_log> TO lt_travel_log_c.
+
+          ENDIF.
+
+          IF <ls_travel>-%control-OverallStatus = cl_abap_behv=>flag_changed.
+            <ls_travel_log>-changed_field_name = 'Overall Status'.
+            <ls_travel_log>-changed_value  = <ls_travel>-OverallStatus.
+            TRY.
+                <ls_travel_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+              CATCH cx_uuid_error.
+                "handle exception
+            ENDTRY.
+
+            APPEND <ls_travel_log> TO lt_travel_log_c.
+
+          ENDIF.
+
+        ENDIF.
+
+      ENDLOOP.
+
+      INSERT  zlog_travel_nm1 FROM TABLE @lt_travel_log_c.
+    ENDIF.
+
+    IF update-travel IS NOT INITIAL.
+
+      lt_travel_log = CORRESPONDING #( update-travel ).
+
+      LOOP AT update-travel ASSIGNING FIELD-SYMBOL(<ls_log_update>).
+        ASSIGN lt_travel_log[ travelid = <ls_log_update>-travelid ] TO FIELD-SYMBOL(<ls_log_u>).
+
+        <ls_log_u>-changing_operation = 'UPDATE'.
+        GET TIME STAMP FIELD <ls_log_u>-created_at.
+
+        IF <ls_log_update>-%control-customerid = if_abap_behv=>mk-on.
+          <ls_log_u>-changed_value = <ls_log_update>-customerid.
+          TRY.
+              <ls_log_u>-change_id = cl_system_uuid=>create_uuid_x16_static( ) .
+            CATCH cx_uuid_error.
+          ENDTRY.
+          <ls_log_u>-changed_field_name = 'customer_id'.
+          APPEND <ls_log_u> TO lt_travel_log_u.
+        ENDIF.
+
+        IF <ls_log_update>-%control-description = if_abap_behv=>mk-on.
+          <ls_log_u>-changed_value = <ls_log_update>-description.
+          TRY.
+              <ls_log_u>-change_id = cl_system_uuid=>create_uuid_x16_static( ) .
+            CATCH cx_uuid_error.
+          ENDTRY.
+          <ls_log_u>-changed_field_name = 'description'.
+          APPEND <ls_log_u> TO lt_travel_log_u.
+        ENDIF.
+      ENDLOOP.
+      INSERT zlog_travel_nm1 FROM TABLE @lt_travel_log_u.
+
+    ENDIF.
+
+    IF delete-travel IS NOT INITIAL.
+      lt_travel_log = CORRESPONDING #( delete-travel ).
+      LOOP AT lt_travel_log ASSIGNING FIELD-SYMBOL(<ls_log_del>).
+        <ls_log_del>-changing_operation = 'DELETE'.
+        GET TIME STAMP FIELD <ls_log_del>-created_at.
+        TRY.
+            <ls_log_del>-change_id = cl_system_uuid=>create_uuid_x16_static( ) .
+          CATCH cx_uuid_error.
+            "handle exception
+        ENDTRY.
+      ENDLOOP.
+
+      " Inserts rows specified in lt_travel_log into the DB table /dmo/log_travel
+      INSERT zlog_travel_nm1 FROM TABLE @lt_travel_log.
+    ENDIF.
+
+**********************************************************************
+**********************************************************************
+    DATA: lt_book_suppl TYPE STANDARD TABLE OF zbooksup_tech_m1.
+    IF create-bookingsupp IS NOT INITIAL.
+
+      lt_book_suppl = VALUE #( FOR ls_booksup IN  create-bookingsupp (
+                                           travel_id  = ls_booksup-TravelId
+                                           booking_id = ls_booksup-BookingId
+                                           booking_supplement_id  = ls_booksup-BookingSupplementId
+                                           supplement_id   = ls_booksup-SupplementId
+                                           price   = ls_booksup-Price
+                                           currency_code    = ls_booksup-CurrencyCode
+                                           last_changed_at = ls_booksup-LastChangedAt
+                                             )  ).
+
+      INSERT ybooksupp_tech_m FROM TABLE @lt_book_suppl.
+
+    ENDIF.
+    IF update-bookingsupp IS NOT INITIAL.
+
+      lt_book_suppl = VALUE #( FOR ls_booksup IN  update-bookingsupp (
+                                        travel_id  = ls_booksup-TravelId
+                                        booking_id = ls_booksup-BookingId
+                                        booking_supplement_id  = ls_booksup-BookingSupplementId
+                                        supplement_id   = ls_booksup-SupplementId
+                                        price   = ls_booksup-Price
+                                        currency_code    = ls_booksup-CurrencyCode
+                                        last_changed_at = ls_booksup-LastChangedAt
+                                          )  ).
+
+
+      UPDATE ybooksupp_tech_m FROM TABLE @lt_book_suppl.
+
+    ENDIF.
+    IF delete-bookingsupp IS NOT INITIAL.
+
+      lt_book_suppl = VALUE #( FOR ls_del IN  delete-bookingsupp (
+                                         travel_id  = ls_del-TravelId
+                                         booking_id = ls_del-BookingId
+                                         booking_supplement_id  = ls_del-BookingSupplementId
+                                           )  ).
+
+
+      DELETE zbooksup_tech_m1 FROM TABLE @lt_book_suppl.
+
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
 CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
@@ -21,6 +188,19 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
     METHODS validatecustomer FOR VALIDATE ON SAVE
       IMPORTING keys FOR travel~validatecustomer.
+    METHODS validatebookingfee FOR VALIDATE ON SAVE
+      IMPORTING keys FOR travel~validatebookingfee.
+
+    METHODS validatecurrencycode FOR VALIDATE ON SAVE
+      IMPORTING keys FOR travel~validatecurrencycode.
+
+    METHODS validatedates FOR VALIDATE ON SAVE
+      IMPORTING keys FOR travel~validatedates.
+
+    METHODS validatestatus FOR VALIDATE ON SAVE
+      IMPORTING keys FOR travel~validatestatus.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR travel~calculatetotalprice.
     METHODS earlynumbering_cba_Booking FOR NUMBERING
       IMPORTING entities FOR CREATE Travel\_Booking.
     METHODS earlynumbering_create FOR NUMBERING
@@ -259,6 +439,86 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD recalcTotPrice.
+
+
+    TYPES:BEGIN OF ty_total,
+            price TYPE /dmo/total_price,
+            curr  TYPE /dmo/currency_code,
+          END OF TY_total.
+    DATA: lt_total      TYPE TABLE OF ty_total,
+          lv_conv_price TYPE ty_total-price.
+    READ ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( BookingFee CurrencyCode )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_travel).
+
+    DELETE lt_travel WHERE CurrencyCode IS INITIAL.
+
+    READ ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Travel BY \_Booking
+    FIELDS ( FlightPrice CurrencyCode )
+    WITH CORRESPONDING #( lt_travel )
+    RESULT DATA(lt_ba_booking).
+
+
+    READ ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Booking BY \_Bookingsuppl
+    FIELDS ( Price CurrencyCode )
+    WITH CORRESPONDING #( lt_travel )
+    RESULT DATA(lt_ba_bookingsuppl).
+
+    LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+
+      lt_total =  VALUE #( ( price = <ls_travel>-BookingFee curr = <ls_travel>-CurrencyCode ) ).
+
+      LOOP AT lt_ba_booking ASSIGNING FIELD-SYMBOL(<ls_booking>)
+                                 USING KEY entity
+                                  WHERE TravelId = <ls_travel>-TravelId
+                                  AND CurrencyCode IS NOT INITIAL.
+
+        APPEND VALUE #( price = <ls_booking>-FlightPrice curr = <ls_booking>-CurrencyCode )
+           TO lt_total.
+
+        LOOP AT lt_ba_bookingsuppl ASSIGNING FIELD-SYMBOL(<ls_booksuppl>)
+                                          USING KEY entity
+                                          WHERE TravelId = <ls_booking>-TravelId
+                                           AND  BookingId = <ls_booking>-BookingId
+                                            AND CurrencyCode IS NOT INITIAL.
+          APPEND VALUE #( price = <ls_booksuppl>-Price curr = <ls_booksuppl>-CurrencyCode )
+           TO lt_total.
+        ENDLOOP.
+
+      ENDLOOP.
+      LOOP AT lt_total ASSIGNING FIELD-SYMBOL(<ls_total>).
+
+        IF <ls_total>-curr = <ls_travel>-CurrencyCode.
+          lv_conv_price = <ls_total>-price.
+        ELSE.
+
+          /dmo/cl_flight_amdp=>convert_currency(
+            EXPORTING
+              iv_amount               = <ls_total>-price
+              iv_currency_code_source = <ls_total>-curr
+              iv_currency_code_target = <ls_travel>-CurrencyCode
+              iv_exchange_rate_date   =  cl_abap_context_info=>get_system_date( )
+            IMPORTING
+              ev_amount               = lv_conv_price
+          ).
+
+        ENDIF.
+
+        <ls_travel>-TotalPrice =  <ls_travel>-TotalPrice + lv_conv_price.
+
+      ENDLOOP.
+
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Travel
+    UPDATE FIELDS ( TotalPrice )
+    WITH CORRESPONDING #( lt_travel ).
+
   ENDMETHOD.
 
   METHOD rejectTravel.
@@ -337,7 +597,7 @@ CLASS lhc_Travel IMPLEMENTATION.
 
     LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
 
-      IF <ls_travel>-CustomerId IS INITIAL OR  line_exists( lt_cust_db[ customer_id = <ls_travel>-CustomerId ] ).
+      IF <ls_travel>-CustomerId IS INITIAL OR  NOT line_exists( lt_cust_db[ customer_id = <ls_travel>-CustomerId ] ).
 
         APPEND VALUE #( %tky = <ls_travel>-%tky ) TO failed-travel.
         APPEND VALUE #( %tky = <ls_travel>-%tky
@@ -356,6 +616,92 @@ CLASS lhc_Travel IMPLEMENTATION.
       ENDIF.
 
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD validateBookingFee.
+  ENDMETHOD.
+
+  METHOD validateCurrencyCode.
+  ENDMETHOD.
+
+  METHOD validateDates.
+
+
+    READ ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+                ENTITY Travel
+                  FIELDS ( BeginDate EndDate )
+                  WITH CORRESPONDING #( keys )
+                RESULT DATA(lt_travels).
+
+    LOOP AT lt_travels INTO DATA(travel).
+
+      IF travel-EndDate < travel-BeginDate.  "end_date before begin_date
+
+        APPEND VALUE #( %tky = travel-%tky ) TO failed-travel.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+                                   textid     = /dmo/cm_flight_messages=>begin_date_bef_end_date
+                                   severity   = if_abap_behv_message=>severity-error
+                                   begin_date = travel-BeginDate
+                                   end_date   = travel-EndDate
+                                   travel_id  = travel-TravelId )
+                        %element-BeginDate   = if_abap_behv=>mk-on
+                        %element-EndDate     = if_abap_behv=>mk-on
+                     ) TO reported-travel.
+
+      ELSEIF travel-BeginDate < cl_abap_context_info=>get_system_date( ).  "begin_date must be in the future
+
+        APPEND VALUE #( %tky        = travel-%tky ) TO failed-travel.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+                                    textid   = /dmo/cm_flight_messages=>begin_date_on_or_bef_sysdate
+                                    severity = if_abap_behv_message=>severity-error )
+                        %element-BeginDate  = if_abap_behv=>mk-on
+                        %element-EndDate    = if_abap_behv=>mk-on
+                      ) TO reported-travel.
+      ENDIF.
+
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD validateStatus.
+
+*    READ ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+*        ENTITY Travel
+*          FIELDS ( OverallStatus )
+*          WITH CORRESPONDING #( keys )
+*        RESULT DATA(lt_travels).
+*
+*    LOOP AT lt_travels INTO DATA(ls_travel).
+*      CASE ls_travel-OverallStatus.
+*        WHEN 'O'.  " Open
+*        WHEN 'X'.  " Cancelled
+*        WHEN 'A'.  " Accepted
+*
+*        WHEN OTHERS.
+*          APPEND VALUE #( %tky = ls_travel-%tky ) TO failed-travel.
+*
+*          APPEND VALUE #( %tky = ls_travel-%tky
+*                          %msg = NEW /dmo/cm_flight_messages(
+*                                     textid = /dmo/cm_flight_messages=>status_invalid
+*                                     severity = if_abap_behv_message=>severity-error
+*                                     status = ls_travel-OverallStatus )
+*                          %element-OverallStatus = if_abap_behv=>mk-on
+*                        ) TO reported-travel.
+*      ENDCASE.
+*    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    MODIFY ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE recalcTotPrice
+    FROM CORRESPONDING #( keys ).
+
 
   ENDMETHOD.
 

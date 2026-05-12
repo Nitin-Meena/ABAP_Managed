@@ -1,9 +1,10 @@
-managed; //implementation in class zbp_i_travel_tech_m1 unique;
+managed implementation in class zcl_bp_travel_tech_m1 unique;
 strict ( 2 );
 
 define behavior for ZI_TRAVEL_TECH_M1 alias Travel
 implementation in class zcl_bp_travel_tech_m1 unique
 persistent table ztravel_tech_m1
+with additional save
 lock master
 authorization master ( instance )
 etag master LastChangedAt
@@ -22,7 +23,15 @@ early numbering
   factory action copyTravel [1];
   internal action recalcTotPrice;
   validation validateCustomer on save { create; field CustomerId; }
+  validation validateDates on save { create; field BeginDate, EndDate; }
+  validation validateStatus on save { create; field OverallStatus; }
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validateBookingFee on save { create; field BookingFee; }
   association _Booking { create ( features : instance ); }
+
+  determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
+
+
 
   mapping for ztravel_tech_m1
     {
@@ -59,6 +68,14 @@ early numbering
   association _Travel;
   association _Bookingsuppl { create ( features : instance ); }
 
+  validation validateStatus on save { create; field BookingStatus; }
+  validation validateCustomer on save { create; field CustomerId; }
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validateConnection on save { create; field CarrierId, ConnectionId, FlightDate; }
+  validation validateFlightPrice on save { create; field FlightPrice; }
+
+  determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
+
   mapping for zbooking_tech_m1
     {
       TravelId      = travel_id;
@@ -78,7 +95,8 @@ early numbering
 
 define behavior for ZI_BOOKSUP_TECH_M1 alias BookingSupp
 implementation in class zcl_bp_booksup_tech_m1 unique
-persistent table zbooksup_tech_m1
+//persistent table zbooksup_tech_m1
+with unmanaged save with full data
 lock dependent by _Travel
 authorization dependent by _Travel
 etag master LastChangedAt
@@ -90,6 +108,12 @@ early numbering
   field ( mandatory ) Price, SupplementId;
   association _Travel;
   association _Booking;
+
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validateSupplement on save { create; field SupplementId; }
+  validation validatePrice on save { create; field price; }
+
+  determination calculateTotalPrice on modify { create; field Price, CurrencyCode; }
 
   mapping for zbooksup_tech_m1
     {

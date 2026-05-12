@@ -6,6 +6,22 @@ CLASS lhc_booking DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING entities FOR CREATE Booking\_Bookingsuppl.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR Booking RESULT result.
+    METHODS validateconnection FOR VALIDATE ON SAVE
+      IMPORTING keys FOR booking~validateconnection.
+
+    METHODS validatecurrencycode FOR VALIDATE ON SAVE
+      IMPORTING keys FOR booking~validatecurrencycode.
+
+    METHODS validatecustomer FOR VALIDATE ON SAVE
+      IMPORTING keys FOR booking~validatecustomer.
+
+    METHODS validateflightprice FOR VALIDATE ON SAVE
+      IMPORTING keys FOR booking~validateflightprice.
+
+    METHODS validatestatus FOR VALIDATE ON SAVE
+      IMPORTING keys FOR booking~validatestatus.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR booking~calculatetotalprice.
 
 ENDCLASS.
 
@@ -83,6 +99,34 @@ CLASS lhc_booking IMPLEMENTATION.
 
 
 
+
+  ENDMETHOD.
+
+  METHOD validateConnection.
+  ENDMETHOD.
+
+  METHOD validateCurrencyCode.
+  ENDMETHOD.
+
+  METHOD validateCustomer.
+  ENDMETHOD.
+
+  METHOD validateFlightPrice.
+  ENDMETHOD.
+
+  METHOD validateStatus.
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    DATA:it_travel TYPE STANDARD TABLE OF zi_travel_tech_m1 WITH UNIQUE HASHED KEY key COMPONENTS TravelId.
+
+    it_travel = CORRESPONDING #( keys  DISCARDING DUPLICATES MAPPING TravelId = TravelId ).
+
+    MODIFY ENTITIES OF zi_travel_tech_m1 IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE recalcTotPrice
+    FROM CORRESPONDING #( it_travel ).
 
   ENDMETHOD.
 
